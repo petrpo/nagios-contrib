@@ -1,6 +1,7 @@
-nagios contrib scripts
+Nagios contrib scripts
 
-script : check_host_uptime : if it is lower than ... system was restarted.
-Values are in the script
+check_host_uptime :
+- if it is lower than ... system was restarted.
+- Values are in the script
 - LOWER =  (min)
 - HIGHER =  (min)
