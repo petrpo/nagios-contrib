@@ -1,23 +1,49 @@
-# Description: Nagios plugin to check uptimes of guest hosts
-# - ssh keys are already set without password
+#!/bin/bash
+# Description: Nagios plugin to check uptimes of linux host
 # Version 0.2
 # Created by petrpo
-# credits to http://askubuntu.com/questions/77352/need-help-with-bash-checking-if-computer-uptime-is-greater-than-
-#5-minutes
+# credits to http://askubuntu.com/questions/77352/need-help-with-bash-checking-$
 #
-# $1 : server - localhost without ssh
-#      mail   - mail server
-#      web    - web server
-#      db     - database server
+# restart was : uptime : 0 days, less than x hours means system was restarted !!!
 #
-# restart was : uptime : 0 days, less than 4 hours -> system was restarted !!!
+# times are hardcoded inside of script
+#
+
+usage() {
+        echo
+        echo "Usage: $0 [-c minutes] [-w minutes]"
+        echo
+}
+
+while getopts w:c: OPT; do
+  case $OPT in
+    w)
+      UPTIME_WARN=$OPTARG
+#      echo "WARN : $UPTIME_WARN"
+      ;;
+    c)
+      UPTIME_CRIT=$OPTARG
+#      echo "CRIT : $UPTIME_CRIT"
+      ;;
+    ?)
+      echo "Error in ARGS"
+      exit;
+      ;;
+  esac
+done
+
+if [ -z $UPTIME_WARN ] || [ -z $UPTIME_CRIT ] ; then
+  usage
+  exit 1
+fi
+
+#echo "WARN : $UPTIME_WARN"
+#echo "CRIT : $UPTIME_CRIT"
 
 COMMAND="cat "
 
-# 30min (2hs)
-LOWER=30
-# 60min (24hs/1d)
-HIGHER=60
+LOWER=$UPTIME_CRIT
+HIGHER=$UPTIME_WARN
 
 UP_SECS="$($COMMAND /proc/uptime | grep -o '^[0-9]\+')"
 UP_MINS=$((${UP_SECS} / 60))
@@ -30,15 +56,14 @@ UP_DAYS=$((${UP_HOURS} / 24))
 
 # less than .... server was restarted
 if [ "${UP_MINS}" -lt "$LOWER"  ] || [ "${UP_MINS}" -eq "$LOWER" ] ; then
-    echo "CRITICAL - uptime : ${UP_MINS} minutes"
+    echo "CRITICAL - uptime : less then ${UP_HOURS} hours"
     RET=2
 elif [ "${UP_MINS}" -gt "$LOWER" ] && [ "${UP_MINS}" -lt "$HIGHER" ] ; then
-    echo "WARNING - uptime : ${UP_MINS} minutes"
+    echo "WARNING - uptime : ${UP_HOURS} hours"
     RET=1
 elif [ "${UP_MINS}" -eq "$HIGHER" ] || [ "${UP_MINS}" -gt "$HIGHER" ] ; then
-    echo "OK - uptime : ${UP_DAYS} day(s)"
+    echo "OK - uptime : ${UP_HOURS} hour(s)"
     RET=0
 fi
 
 exit $RET
-
