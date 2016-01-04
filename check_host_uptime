@@ -1,0 +1,44 @@
+# Description: Nagios plugin to check uptimes of guest hosts
+# - ssh keys are already set without password
+# Version 0.2
+# Created by petrpo
+# credits to http://askubuntu.com/questions/77352/need-help-with-bash-checking-if-computer-uptime-is-greater-than-
+#5-minutes
+#
+# $1 : server - localhost without ssh
+#      mail   - mail server
+#      web    - web server
+#      db     - database server
+#
+# restart was : uptime : 0 days, less than 4 hours -> system was restarted !!!
+
+COMMAND="cat "
+
+# 30min (2hs)
+LOWER=30
+# 60min (24hs/1d)
+HIGHER=60
+
+UP_SECS="$($COMMAND /proc/uptime | grep -o '^[0-9]\+')"
+UP_MINS=$((${UP_SECS} / 60))
+UP_HOURS=$((${UP_MINS} / 60))
+UP_DAYS=$((${UP_HOURS} / 24))
+
+#echo "MINS : $UP_MINS"
+#echo "HOURS: $UP_HOURS"
+#echo "DAYS : $UP_DAYS"
+
+# less than .... server was restarted
+if [ "${UP_MINS}" -lt "$LOWER"  ] || [ "${UP_MINS}" -eq "$LOWER" ] ; then
+    echo "CRITICAL - uptime : ${UP_MINS} minutes"
+    RET=2
+elif [ "${UP_MINS}" -gt "$LOWER" ] && [ "${UP_MINS}" -lt "$HIGHER" ] ; then
+    echo "WARNING - uptime : ${UP_MINS} minutes"
+    RET=1
+elif [ "${UP_MINS}" -eq "$HIGHER" ] || [ "${UP_MINS}" -gt "$HIGHER" ] ; then
+    echo "OK - uptime : ${UP_DAYS} day(s)"
+    RET=0
+fi
+
+exit $RET
+
